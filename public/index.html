@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SmartPost AI -- Trợ lý Viết bài Bán hàng &amp; Tính Lợi nhuận Khuyến mãi</title>
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <!-- HEADER & THANH CÔNG CỤ ĐẦU TRANG -->
+  <header class="site-header">
+    <div class="container header-top">
+      <div class="brand-wrap">
+        <div class="brand-logo">SmartPost AI</div>
+        <div>
+          <div class="brand-badges">
+            <span class="pill-green-soft">KẾ TOÁN HỘ KINH DOANH</span>
+            <span class="pill-gray-soft">Lưu trên máy đang dùng</span>
+          </div>
+          <h1 class="main-title">Trợ Lý Viết Bài Bán Hàng &amp; Tính Lợi Nhuận Khuyến Mãi</h1>
+        </div>
+      </div>
+
+      <div class="header-toolbar">
+        <span id="aiModePill" class="toolbar-pill pill-status">● Đang kiểm tra kết nối AI...</span>
+        <button type="button" id="checkFormulaBtn" class="toolbar-btn">✓ Kiểm tra công thức mẫu</button>
+        <button type="button" id="resetDemoBtn" class="toolbar-btn toolbar-btn-danger">↺ Làm mới dữ liệu mẫu</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="container main-wrap">
+    <!-- BƯỚC 1: CHỌN NGÀNH KINH DOANH MẪU -->
+    <section class="card step-card">
+      <div class="step-title-row">
+        <span class="step-badge">BƯỚC 1</span>
+        <h2>Chọn ngành hàng kinh doanh</h2>
+        <span class="step-hint">(Chuyển ngành không làm mất lịch sử hay sản phẩm đã sửa)</span>
+      </div>
+
+      <div class="scenario-bar">
+        <div class="scenario-text">
+          Ví dụ đang mở: <strong id="scenarioTitle">--</strong>
+        </div>
+        <button type="button" id="reloadIndustryBtn" class="btn btn-outline btn-sm">
+          ↺ Nạp lại mẫu ngành này
+        </button>
+      </div>
+
+      <div id="industryTabs" class="industry-grid" role="tablist" aria-label="Chọn ngành kinh doanh"></div>
+    </section>
+
+    <!-- KHÔNG GIAN LÀM VIỆC 2 CỘT -->
+    <div class="workspace-grid">
+      <!-- ================= CỘT TRÁI (BƯỚC 2, 3, 4) ================= -->
+      <div class="left-column">
+        <!-- BƯỚC 2: CỬA HÀNG & DANH SÁCH SẢN PHẨM -->
+        <section class="card step-card">
+          <div class="step-head-stack">
+            <div class="step-title-row">
+              <span class="step-badge">BƯỚC 2</span>
+              <div>
+                <h2>Cửa Hàng &amp; Danh Sách Mặt Hàng</h2>
+                <div class="sub-caption">
+                  Đang xem: <strong id="activeStoreCaption">--</strong>
+                </div>
+              </div>
+            </div>
+
+            <div class="inner-tabs-row">
+              <button type="button" id="tabProductsBtn" class="inner-tab active">📦 Danh sách mặt hàng</button>
+              <button type="button" id="tabStoreBtn" class="inner-tab">🏪 Thông tin cửa hàng</button>
+            </div>
+          </div>
+
+          <!-- Tab Sản phẩm -->
+          <div id="productsPanel">
+            <div class="panel-action-bar">
+              <span class="muted-small">Chọn một mặt hàng để nạp giá xuống <strong>Bước 3 (Góc Kế Toán)</strong>:</span>
+              <button type="button" id="addProductBtn" class="btn btn-outline btn-sm">+ Thêm mặt hàng mới</button>
+            </div>
+            <div id="productList" class="product-list"></div>
+          </div>
+
+          <!-- Tab Thông tin cửa hàng -->
+          <div id="storeProfilePanel" class="hidden">
+            <div class="form-group">
+              <label for="store_ten">Tên cửa hàng / quán <span class="req">*</span></label>
+              <input type="text" id="store_ten" maxlength="100" />
+            </div>
+            <div class="form-group">
+              <label for="store_khach">Khách hàng thường mua</label>
+              <textarea id="store_khach" rows="2" maxlength="300"></textarea>
+            </div>
+            <div class="form-group">
+              <label for="store_diem_noi_bat">Điểm nổi bật của quán / cửa hàng</label>
+              <textarea id="store_diem_noi_bat" rows="2" maxlength="350"></textarea>
+            </div>
+            <div class="form-group">
+              <label for="store_lien_he">SĐT / Địa chỉ cửa hàng (không nhập thông tin cá nhân của khách)</label>
+              <input type="text" id="store_lien_he" maxlength="150" />
+            </div>
+            <div class="form-group">
+              <label for="store_ghi_chu_gia">Ghi chú giá (AI sẽ giữ nguyên câu này trong bài đăng)</label>
+              <input type="text" id="store_ghi_chu_gia" maxlength="150" />
+            </div>
+            <button type="button" id="saveStoreBtn" class="btn btn-primary btn-sm">✓ Lưu thông tin cửa hàng</button>
+            <span id="storeSaveMsg" class="inline-feedback"></span>
+          </div>
+        </section>
+
+        <!-- BƯỚC 3: GÓC KẾ TOÁN - TÍNH GIÁ & LỢI NHUẬN KHUYẾN MÃI -->
+        <section class="card step-card card-accounting-focus">
+          <div class="step-title-row">
+            <span class="step-badge step-badge-solid">BƯỚC 3</span>
+            <div>
+              <h2>Góc Kế Toán: Tính Giá &amp; Lợi Nhuận Khuyến Mãi</h2>
+              <div class="sub-caption">Số liệu do hệ thống tính bằng công thức cố định (giá vốn chỉ mình bạn xem, không gửi cho AI viết bài)</div>
+            </div>
+          </div>
+
+          <div class="accounting-quick-row">
+            <button type="button" id="loadSample28kBtn" class="btn btn-outline btn-sm">Ví dụ Bún đậu (28k / 55k / 15%)</button>
+            <button type="button" id="loadSample199kBtn" class="btn btn-outline btn-sm">Ví dụ Áo sơ mi (120k / 199k / 20%)</button>
+          </div>
+
+          <div class="active-product-bar">
+            <div>Mặt hàng đang tính: <strong id="calcActiveProductName">--</strong></div>
+            <button type="button" id="saveNumbersToProductBtn" class="btn btn-white btn-sm">Lưu giá vào mặt hàng</button>
+          </div>
+
+          <!-- 3 ô chính: V, G, Giảm -->
+          <div class="form-row-3">
+            <div class="form-group">
+              <label for="calc_gia_von">Giá vốn nhập hàng (V)</label>
+              <div class="input-unit-wrap">
+                <input type="text" inputmode="numeric" id="calc_gia_von" />
+                <span class="unit-tag">đ</span>
+              </div>
+              <span class="field-error" id="err_gia_von"></span>
+            </div>
+
+            <div class="form-group">
+              <label for="calc_gia_ban">Giá bán niêm yết (G) <span class="req">*</span></label>
+              <div class="input-unit-wrap">
+                <input type="text" inputmode="numeric" id="calc_gia_ban" />
+                <span class="unit-tag">đ</span>
+              </div>
+              <span class="field-error" id="err_don_gia"></span>
+            </div>
+
+            <div class="form-group">
+              <label for="calc_gia_tri_km" id="calcKmValueLabel">Mức giảm giá (%) <span class="req">*</span></label>
+              <div class="input-unit-wrap">
+                <input type="text" inputmode="numeric" id="calc_gia_tri_km" />
+                <span class="unit-tag" id="calcKmUnit">%</span>
+              </div>
+              <span class="field-error" id="err_gia_tri_km"></span>
+            </div>
+          </div>
+
+          <!-- Thử nhanh mức giảm -->
+          <div class="quick-discount-bar">
+            <span class="muted-small">Thử nhanh mức giảm:</span>
+            <button type="button" class="chip-btn" data-pct="0">0%</button>
+            <button type="button" class="chip-btn" data-pct="10">10%</button>
+            <button type="button" class="chip-btn" data-pct="15">15%</button>
+            <button type="button" class="chip-btn" data-pct="25">25%</button>
+            <button type="button" class="chip-btn" data-pct="40">40%</button>
+            <button type="button" class="chip-btn chip-btn-warn" data-pct="50">50% (Thử bán lỗ)</button>
+          </div>
+
+          <!-- Tùy chọn thêm: Loại KM, SL, Ngày áp dụng -->
+          <details class="promo-advanced">
+            <summary>Mở rộng: Đổi kiểu khuyến mãi, số lượng mua &amp; ngày áp dụng</summary>
+            <div class="promo-adv-body">
+              <div class="form-row-3">
+                <div class="form-group">
+                  <label for="calc_loai_km">Kiểu khuyến mãi</label>
+                  <select id="calc_loai_km">
+                    <option value="phan_tram">Giảm theo %</option>
+                    <option value="tien_co_dinh">Giảm số tiền cố định (đ)</option>
+                    <option value="phan_tram_theo_so_luong">Giảm % khi mua từ N sản phẩm</option>
+                    <option value="khong">Không khuyến mãi</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label for="calc_so_luong">Số lượng tính mẫu</label>
+                  <input type="text" inputmode="numeric" id="calc_so_luong" value="1" />
+                  <span class="field-error" id="err_so_luong"></span>
+                </div>
+                <div class="form-group" id="calcMinQtyWrap">
+                  <label for="calc_sl_toi_thieu">Mua ít nhất (N sp)</label>
+                  <input type="text" inputmode="numeric" id="calc_sl_toi_thieu" value="2" />
+                  <span class="field-error" id="err_sl_toi_thieu"></span>
+                </div>
+              </div>
+              <div class="form-row-2">
+                <div class="form-group">
+                  <label for="calc_ngay_bat_dau">Ngày bắt đầu KM</label>
+                  <input type="date" id="calc_ngay_bat_dau" />
+                  <span class="field-error" id="err_ngay_bat_dau"></span>
+                </div>
+                <div class="form-group">
+                  <label for="calc_ngay_ket_thuc">Ngày kết thúc KM</label>
+                  <input type="date" id="calc_ngay_ket_thuc" />
+                  <span class="field-error" id="err_ngay_ket_thuc"></span>
+                </div>
+              </div>
+            </div>
+          </details>
+
+          <!-- Chi phí phụ C -->
+          <div class="cost-box">
+            <div class="cost-box-title">CHI PHÍ PHỤ TRÊN MỖI ĐƠN (C = ĐÓNG GÓI + HỖ TRỢ SHIP + CHI PHÍ KHÁC)</div>
+            <div class="form-row-3">
+              <div class="form-group">
+                <label for="calc_dong_goi">Đóng gói / hộp</label>
+                <div class="input-unit-wrap">
+                  <input type="text" inputmode="numeric" id="calc_dong_goi" value="0" />
+                  <span class="unit-tag">đ</span>
+                </div>
+                <span class="field-error" id="err_dong_goi"></span>
+              </div>
+              <div class="form-group">
+                <label for="calc_ho_tro_ship">Hỗ trợ ship</label>
+                <div class="input-unit-wrap">
+                  <input type="text" inputmode="numeric" id="calc_ho_tro_ship" value="0" />
+                  <span class="unit-tag">đ</span>
+                </div>
+                <span class="field-error" id="err_ho_tro_ship"></span>
+              </div>
+              <div class="form-group">
+                <label for="calc_chi_phi_khac">Chi phí khác</label>
+                <div class="input-unit-wrap">
+                  <input type="text" inputmode="numeric" id="calc_chi_phi_khac" value="0" />
+                  <span class="unit-tag">đ</span>
+                </div>
+                <span class="field-error" id="err_chi_phi_khac"></span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 6 Ô CHỈ TIÊU KẾ TOÁN (2x3) -->
+          <div class="kpi-grid-2">
+            <div class="kpi-card">
+              <div class="kpi-label">GIÁ BÁN CHO KHÁCH (SAU GIẢM)</div>
+              <div class="kpi-val" id="kpi_gia_sau_giam">--</div>
+              <div class="kpi-sub" id="kpi_tiet_kiem">--</div>
+            </div>
+
+            <div class="kpi-card kpi-card-profit" id="kpiProfitCard">
+              <div class="kpi-label">TIỀN LÃI SAU CHI PHÍ</div>
+              <div class="kpi-val" id="kpi_loi_nhuan">--</div>
+              <div class="kpi-sub">Giá sau giảm − Giá vốn − Chi phí phụ</div>
+            </div>
+
+            <div class="kpi-card">
+              <div class="kpi-label">Lãi gộp (chưa trừ chi phí phụ)</div>
+              <div class="kpi-val-sm" id="kpi_lai_gop">--</div>
+              <div class="kpi-sub">Giá sau giảm − Giá vốn</div>
+            </div>
+
+            <div class="kpi-card">
+              <div class="kpi-label">Tổng chi phí (Vốn + Phụ phí)</div>
+              <div class="kpi-val-sm" id="kpi_tong_chi_phi">--</div>
+              <div class="kpi-sub" id="kpi_chi_phi_c">--</div>
+            </div>
+
+            <div class="kpi-card">
+              <div class="kpi-label">Tỷ lệ lãi trên giá bán (%)</div>
+              <div class="kpi-val-sm" id="kpi_bien_ln">--</div>
+              <div class="kpi-sub">Tiền lãi ÷ Giá sau giảm × 100</div>
+            </div>
+
+            <div class="kpi-card">
+              <div class="kpi-label">Giảm tối đa để không lỗ</div>
+              <div class="kpi-val-sm" id="kpi_giam_hoa_von">--</div>
+              <div class="kpi-sub" id="kpi_giam_hoa_von_tien">--</div>
+            </div>
+          </div>
+
+          <div id="profitStatusBanner" class="status-banner status-ok">
+            Đang tính số liệu từ máy chủ...
+          </div>
+
+          <div class="threshold-row">
+            <label for="calc_nguong_ln">Cảnh báo khi tỷ lệ lãi thấp hơn (%):</label>
+            <input type="text" inputmode="numeric" id="calc_nguong_ln" value="10" class="threshold-input" />
+          </div>
+        </section>
+
+        <!-- BƯỚC 4: HỎI ĐÁP VỚI TRỢ LÝ AI & VIẾT BÀI -->
+        <section class="card step-card">
+          <div class="step-title-row">
+            <span class="step-badge">BƯỚC 4</span>
+            <div>
+              <h2>Hỏi Đáp Với Trợ Lý AI &amp; Viết Bài</h2>
+              <div class="sub-caption">Trao đổi trực tiếp để hỏi xem có lãi không hoặc nhờ sửa lại bài đăng</div>
+            </div>
+          </div>
+
+          <div class="chat-header-bar">
+            <span>Ngành đang trao đổi: <strong id="chatIndustryName">--</strong></span>
+            <button type="button" id="clearChatBtn" class="btn btn-white btn-sm">Xóa đoạn chat</button>
+          </div>
+
+          <div id="chatMessages" class="chat-window" aria-live="polite"></div>
+
+          <div class="suggestion-chips">
+            <button type="button" class="suggest-chip" data-prompt="Với mức giảm giá hiện tại, bán món này có lãi ổn không?">
+              📊 Hỏi xem có lãi không
+            </button>
+            <button type="button" class="suggest-chip" data-prompt="Gợi ý giúp tôi cách khuyến mãi để thu hút khách mà vẫn giữ được lãi">
+              💡 Gợi ý ưu đãi giữ lãi
+            </button>
+            <button type="button" class="suggest-chip" data-prompt="Viết bộ bài đăng rõ giá và ưu đãi cho sản phẩm này">
+              ✨ Viết bài bán hàng
+            </button>
+            <button type="button" class="suggest-chip" data-prompt="Viết lại bài Facebook ngắn gọn và dễ đọc hơn">
+              ✂ Sửa bài ngắn hơn
+            </button>
+          </div>
+
+          <textarea
+            id="chatInput"
+            rows="2"
+            placeholder="Nhập câu hỏi hoặc yêu cầu (VD: Giảm 15% có bị lỗ không? Hoặc: Viết lại bài Facebook ngắn gọn hơn)..."
+          ></textarea>
+
+          <div class="chat-action-row">
+            <button type="button" id="chatSendBtn" class="btn btn-white">
+              💬 Hỏi đáp với AI
+            </button>
+            <button type="button" id="generateKitBtn" class="btn btn-primary">
+              ✨ Viết / Sửa bài đăng
+            </button>
+          </div>
+          <p class="chat-foot-hint">
+            Bấm <strong>Enter</strong> để hỏi đáp nhanh, hoặc bấm <strong>Viết / Sửa bài đăng</strong> để cập nhật bài bên cột phải.
+          </p>
+        </section>
+      </div>
+
+      <!-- ================= CỘT PHẢI (KẾT QUẢ & LƯU TRỮ) ================= -->
+      <div class="right-column">
+        <!-- KẾT QUẢ: BÀI ĐĂNG FACEBOOK, ZALO & MẪU TRẢ LỜI KHÁCH -->
+        <section class="card step-card card-results-focus">
+          <div class="result-head-top">
+            <div class="step-title-row">
+              <span class="step-badge step-badge-solid">KẾT QUẢ</span>
+              <div>
+                <h2>Bài Đăng Facebook, Zalo &amp; Mẫu Trả Lời Khách</h2>
+                <div class="sub-caption">Bạn có thể sửa chữ trực tiếp trong ô dưới đây trước khi sao chép hoặc lưu</div>
+              </div>
+            </div>
+
+            <div class="result-top-btns">
+              <button type="button" id="regenerateKitBtn" class="btn btn-white btn-sm">↻ Viết lại</button>
+              <button type="button" id="saveHistoryBtn" class="btn btn-primary btn-sm">★ Lưu vào Lịch sử</button>
+            </div>
+          </div>
+
+          <div class="channel-tabs">
+            <button type="button" class="channel-tab active" data-channel="facebook">📘 A. Bài Facebook</button>
+            <button type="button" class="channel-tab" data-channel="zalo">💬 B. Tin nhắn Zalo</button>
+            <button type="button" class="channel-tab" data-channel="tuvan">🤝 C. 3 Mẫu trả lời khách</button>
+          </div>
+
+          <div class="checklist-bar">
+            <div class="check-pills">
+              <span class="check-pill">✓ Mở bài rõ ràng</span>
+              <span class="check-pill">✓ Đúng giá đã tính</span>
+              <span class="check-pill">✓ Không lộ giá vốn</span>
+            </div>
+            <button type="button" id="copyActiveChannelBtn" class="btn btn-primary btn-sm">
+              📋 Sao chép bài Facebook
+            </button>
+          </div>
+
+          <!-- Banner đối soát số liệu (BR-08, BR-12, BR-16) -->
+          <div id="kitAuditBanner" class="audit-box hidden"></div>
+
+          <!-- Khung soạn thảo A (Facebook) và B (Zalo) -->
+          <div id="singleEditorPane">
+            <textarea id="channelEditor" class="channel-editor" rows="15"></textarea>
+          </div>
+
+          <!-- Khung soạn thảo C (3 mẫu tư vấn) -->
+          <div id="consultEditorPane" class="hidden">
+            <div class="consult-card">
+              <label for="consult_1">Mẫu 1: Trả lời khách hỏi giá &amp; khuyến mãi</label>
+              <textarea id="consult_1" rows="3"></textarea>
+            </div>
+            <div class="consult-card">
+              <label for="consult_2">Mẫu 2: Trả lời khách hỏi giao hàng / thời gian</label>
+              <textarea id="consult_2" rows="3"></textarea>
+            </div>
+            <div class="consult-card">
+              <label for="consult_3">Mẫu 3: Mẫu chốt đơn lịch sự</label>
+              <textarea id="consult_3" rows="3"></textarea>
+            </div>
+          </div>
+
+          <div id="copyFeedback" class="inline-feedback"></div>
+
+          <p class="legal-disclaimer">
+            <em>Lưu ý trước khi đăng:</em> Bạn vui lòng đọc lại giá bán, điều kiện khuyến mãi và thời gian áp dụng để đảm bảo chính xác trước khi đăng lên Facebook/Zalo.
+          </p>
+        </section>
+
+        <!-- LƯU TRỮ: LỊCH SỬ BÀI ĐÃ LƯU -->
+        <section class="card step-card">
+          <div class="history-head">
+            <div class="step-title-row">
+              <span class="step-badge">LƯU TRỮ</span>
+              <div>
+                <h2>Lịch Sử Bài Đã Lưu (<span id="historyCountNum">0</span>)</h2>
+                <div class="sub-caption">Lưu trên trình duyệt máy này (xóa mặt hàng không làm mất bài đã lưu)</div>
+              </div>
+            </div>
+            <div class="history-head-btns">
+              <button type="button" id="exportCsvBtn" class="btn btn-white btn-sm">Xuất file Excel (CSV)</button>
+              <button type="button" id="clearHistoryBtn" class="btn btn-outline-danger btn-sm">Xóa tất cả</button>
+            </div>
+          </div>
+
+          <div id="historyEmptyMsg" class="empty-history">
+            Chưa có bài nào được lưu. Sau khi tạo bài ưng ý, bấm <strong>"★ Lưu vào Lịch sử"</strong> để lưu lại và xuất Excel khi cần.
+          </div>
+          <div id="historyList" class="history-list hidden"></div>
+        </section>
+      </div>
+    </div>
+  </main>
+
+  <!-- MODAL THÊM / SỬA MẶT HÀNG -->
+  <div id="productModal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="productModalTitle">
+    <div class="modal-card">
+      <div class="modal-head">
+        <h3 id="productModalTitle">Thêm / Sửa Mặt Hàng</h3>
+        <button type="button" class="modal-close" data-close-modal="productModal">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label for="pm_ten">Tên mặt hàng / dịch vụ <span class="req">*</span></label>
+          <input type="text" id="pm_ten" maxlength="100" />
+        </div>
+        <div class="form-group">
+          <label for="pm_mo_ta">Mô tả đặc điểm thực tế</label>
+          <textarea id="pm_mo_ta" rows="2" maxlength="500"></textarea>
+        </div>
+        <div class="form-row-3">
+          <div class="form-group">
+            <label for="pm_gia_von">Giá vốn (đ)</label>
+            <input type="text" inputmode="numeric" id="pm_gia_von" />
+          </div>
+          <div class="form-group">
+            <label for="pm_don_gia">Giá bán gốc (đ) <span class="req">*</span></label>
+            <input type="text" inputmode="numeric" id="pm_don_gia" />
+          </div>
+          <div class="form-group">
+            <label for="pm_giam">Mức giảm (%)</label>
+            <input type="text" inputmode="numeric" id="pm_giam" value="10" />
+          </div>
+        </div>
+        <div class="form-row-3">
+          <div class="form-group">
+            <label for="pm_dong_goi">Đóng gói (đ)</label>
+            <input type="text" inputmode="numeric" id="pm_dong_goi" value="0" />
+          </div>
+          <div class="form-group">
+            <label for="pm_ship">Hỗ trợ ship (đ)</label>
+            <input type="text" inputmode="numeric" id="pm_ship" value="0" />
+          </div>
+          <div class="form-group">
+            <label for="pm_khac">Chi phí khác (đ)</label>
+            <input type="text" inputmode="numeric" id="pm_khac" value="0" />
+          </div>
+        </div>
+        <div id="pm_error" class="inline-error"></div>
+      </div>
+      <div class="modal-foot">
+        <button type="button" class="btn btn-white" data-close-modal="productModal">Hủy</button>
+        <button type="button" id="saveProductModalBtn" class="btn btn-primary">Lưu mặt hàng</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL KIỂM TRA CÔNG THỨC MẪU -->
+  <div id="formulaModal" class="modal-backdrop hidden" role="dialog" aria-modal="true">
+    <div class="modal-card modal-card-wide">
+      <div class="modal-head">
+        <h3>✓ Kiểm Tra Công Thức Kế Toán Mẫu</h3>
+        <button type="button" class="modal-close" data-close-modal="formulaModal">×</button>
+      </div>
+      <div class="modal-body" id="formulaModalBody"></div>
+      <div class="modal-foot">
+        <button type="button" class="btn btn-primary" data-close-modal="formulaModal">Đóng</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/industries.js"></script>
+  <script src="/script.js"></script>
+</body>
+</html>

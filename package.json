@@ -1,0 +1,25 @@
+{
+  "name": "smartpost-ai",
+  "version": "1.0.0",
+  "description": "Website AI tao bai dang Facebook va Zalo cho ho kinh doanh, co tinh gia khuyen mai va kiem soat so lieu minh bach.",
+  "main": "server/server.js",
+  "scripts": {
+    "start": "node server/server.js",
+    "test": "node --test test/*.test.js"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "keywords": [
+    "smartpost-ai",
+    "ke-toan",
+    "khuyen-mai",
+    "gemini-ai"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "dotenv": "^18.0.10",
+    "express": "^5.3.0",
+    "express-rate-limit": "^8.7.5"
+  }
+}
